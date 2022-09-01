@@ -34,7 +34,9 @@ class ColNames :
 c = ColNames()
 
 def main() :
+
   pass
+
   ##
   rp_stch = GithubData(ra.stch)
   ##
@@ -63,6 +65,8 @@ def main() :
   ##
   ds = ds[[c.id , c.jdt , c.dt , c.ns]]
   ##
+  ds = ds.astype(str)
+  ##
   rp_targ = GithubData(ra.targ)
   rp_targ.clone()
   ##
@@ -86,6 +90,7 @@ def main() :
   rp_targ.rmdir()
 
   ##
+
 
 ##
 
