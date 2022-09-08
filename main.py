@@ -2,102 +2,91 @@
 
   """
 
-##
-
-
 import pandas as pd
 from githubdata import GithubData
-from githubdata.main import _clean_github_url as cln_github_url
-from mirutil import utils as mu
-from mirutil.df_utils import read_data_according_to_type as read_data
 from mirutil.df_utils import save_as_prq_wo_index as sprq
 from persiantools.jdatetime import JalaliDate
 
 
-class ReposAddresses :
-  stch = 'imahdimir/d-status-changes'
-  targ = 'imahdimir/d-clean-d-firm-status-change'
+class GDUrl :
+    cur = 'https://github.com/imahdimir/u-d-firm-status-changes'
+    src = 'https://github.com/imahdimir/d-0-firm-status-change'
+    trg = 'https://github.com/imahdimir/d-firm-status-changes'
 
-ra = ReposAddresses()
+gu = GDUrl()
 
 class ColNames :
-  id = 'TSETMC_ID'
-  jdt = 'JDateTime'
-  d = 'Date'
-  jd = 'JDate'
-  ns = 'NewStatus'
-  iso = 'iso'
-  dt = 'DateTime'
-  t = 'Time'
-  r = 'Row'
+    id = 'TSETMC_ID'
+    jdt = 'JDateTime'
+    d = 'Date'
+    jd = 'JDate'
+    ns = 'NewStatus'
+    iso = 'iso'
+    dt = 'DateTime'
+    t = 'Time'
+    r = 'Row'
 
 c = ColNames()
 
 def main() :
+    pass
 
-  pass
+    ##
+    gd_src = GithubData(gu.src)
+    gd_src.overwriting_clone()
+    ##
+    ds = gd_src.read_data()
+    ##
+    c2s = [c.id , c.jdt , c.r]
+    ds = ds.sort_values(c2s , ascending = [False , False , True])
+    ##
+    msk = ds.duplicated([c.id , c.jdt] , keep = False)
+    df1 = ds[msk]
+    len(df1)
+    ##
+    ds = ds.drop_duplicates([c.id , c.jdt] , keep = 'first')
+    ##
+    ds[c.jd] = ds[c.jdt].str[:10]
+    ##
+    ds[c.jd] = ds[c.jd].apply(lambda x : JalaliDate.fromisoformat(x))
+    ##
+    ds[c.d] = ds[c.jd].apply(lambda x : x.to_gregorian())
+    ##
+    ds[c.iso] = ds[c.d].astype(str) + ds[c.jdt].str[10 :]
+    ##
+    ds[c.dt] = pd.to_datetime(ds['iso'] , format = '%Y-%m-%dT%H:%M:%S')
+    ##
+    ds = ds[[c.id , c.jdt , c.dt , c.ns]]
+    ##
+    ds = ds.astype(str)
 
-  ##
-  rp_stch = GithubData(ra.stch)
-  ##
-  rp_stch.clone()
-  ##
-  dsfp = rp_stch.data_fp
-  ds = read_data(dsfp)
-  ##
-  ds = ds.sort_values([c.id , c.jdt , c.r] , ascending = [False , False , True])
-  ##
-  msk = ds.duplicated([c.id , c.jdt] , keep = False)
-  df1 = ds[msk]
-  len(df1)
-  ##
-  ds = ds.drop_duplicates([c.id , c.jdt] , keep = 'first')
-  ##
-  ds[c.jd] = ds[c.jdt].str[:10]
-  ##
-  ds[c.jd] = ds[c.jd].apply(lambda x : JalaliDate.fromisoformat(x))
-  ##
-  ds[c.d] = ds[c.jd].apply(lambda x : x.to_gregorian())
-  ##
-  ds[c.iso] = ds[c.d].astype(str) + ds[c.jdt].str[10 :]
-  ##
-  ds[c.dt] = pd.to_datetime(ds['iso'] , format = '%Y-%m-%dT%H:%M:%S')
-  ##
-  ds = ds[[c.id , c.jdt , c.dt , c.ns]]
-  ##
-  ds = ds.astype(str)
-  ##
-  rp_targ = GithubData(ra.targ)
-  rp_targ.clone()
-  ##
-  dsfp = rp_targ.data_fp
-  ##
-  sprq(ds , dsfp)
-  ##
-  cur_url = cln_github_url(rp_targ.user_name + '/b-' + rp_targ.repo_name)
-  ##
-  msg = 'builded by:'
-  msg += ' ' + cur_url
-  ##
-  tokp = '/Users/mahdi/Dropbox/tok.txt'
-  tok = mu.get_tok_if_accessible(tokp)
-  ##
-  rp_targ.commit_and_push(msg , user = rp_targ.user_name , token = tok)
+    ##
 
-  ##
+    gd_trg = GithubData(gu.trg)
+    gd_trg.overwriting_clone()
+    ##
+    dtrp = gd_trg.data_fp
+    sprq(ds , dtrp)
+    ##
 
-  rp_stch.rmdir()
-  rp_targ.rmdir()
+    msg = 'date updated by:'
+    msg += gu.cur
+    ##
+    gd_trg.commit_and_push(msg)
 
-  ##
+    ##
 
+
+    gd_src.rmdir()
+    gd_trg.rmdir()
+
+
+    ##
 
 ##
-
-
 if __name__ == '__main__' :
-  main()
-  print('done')
+    main()
+    print('done')
 
 
 ##
